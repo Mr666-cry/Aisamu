@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Samu AI Chat GPT-3.5</title>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        background: #0d0d0d;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+
+    /* Loading Screen */
+    #loadingScreen {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: #000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        z-index: 9999;
+    }
+    #loadingScreen h1 {
+        font-size: 2.5em;
+        animation: glow 1.5s infinite alternate;
+    }
+    #loadingScreen .red {color: red;}
+    #loadingScreen .white {color: white;}
+    @keyframes glow {
+        0% {opacity: 0.5;}
+        100% {opacity: 1;}
+    }
+
+    /* Music Button */
+    #musicBtn {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #1e1e1e;
+        color: #fff;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background 0.3s;
+        z-index: 100;
+    }
+    #musicBtn:hover {
+        background: #ff0000;
+    }
+
+    /* Chat Container */
+    .chat-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+        overflow-y: auto;
+    }
+    .message {
+        margin: 10px 0;
+        max-width: 80%;
+        padding: 12px;
+        border-radius: 10px;
+        line-height: 1.4;
+    }
+    .user {
+        background: #1f1f1f;
+        align-self: flex-end;
+    }
+    .bot {
+        background: #292929;
+        align-self: flex-start;
+    }
+
+    /* Input Area */
+    .input-area {
+        display: flex;
+        padding: 15px;
+        background: #1a1a1a;
+        border-top: 1px solid #333;
+    }
+    .input-area input {
+        flex: 1;
+        padding: 12px;
+        border-radius: 8px;
+        border: none;
+        outline: none;
+        font-size: 16px;
+        margin-right: 10px;
+    }
+    .input-area button {
+        background: #ff0000;
+        color: #fff;
+        border: none;
+        padding: 12px 18px;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+    .input-area button:hover {
+        background: #cc0000;
+    }
+</style>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div id="loadingScreen">
+    <h1><span class="red">By Samu</span> <span class="white">Developer</span> 🦅</h1>
+</div>
+
+<!-- Music Button -->
+<button id="musicBtn">🎵 Play Music</button>
+<audio id="bgMusic" src="https://files.catbox.moe/48dbds.mp3" loop></audio>
+
+<!-- Chat Section -->
+<div class="chat-container" id="chatContainer"></div>
+
+<!-- Input Area -->
+<div class="input-area">
+    <input type="text" id="userInput" placeholder="Tulis pesan...">
+    <button onclick="sendMessage()">Kirim</button>
+</div>
+
+<script>
+    // Loading Screen Hide
+    setTimeout(() => {
+        document.getElementById('loadingScreen').style.display = 'none';
+    }, 3000);
+
+    // Music Button
+    const musicBtn = document.getElementById('musicBtn');
+    const bgMusic = document.getElementById('bgMusic');
+    let isPlaying = false;
+    musicBtn.addEventListener('click', () => {
+        if (!isPlaying) {
+            bgMusic.play();
+            isPlaying = true;
+            musicBtn.textContent = '⏸ Pause Music';
+        } else {
+            bgMusic.pause();
+            isPlaying = false;
+            musicBtn.textContent = '🎵 Play Music';
+        }
+    });
+
+    const API_KEY = "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";
+
+    async function sendMessage() {
+        const input = document.getElementById('userInput');
+        const text = input.value.trim();
+        if (!text) return;
+
+        // Tampilkan pesan user
+        appendMessage('user', text);
+        input.value = '';
+
+        // Loading text
+        appendMessage('bot', 'AI sedang mengetik...');
+
+        try {
+            const response = await fetch("https://api.openai.com/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: "gpt-3.5-turbo",
+                    messages: [{ role: "user", content: text }]
+                })
+            });
+
+            const data = await response.json();
+            document.querySelector('.bot:last-child').remove(); // hapus "AI sedang mengetik..."
+            if (data.choices && data.choices.length > 0) {
+                appendMessage('bot', data.choices[0].message.content);
+            } else {
+                appendMessage('bot', 'Terjadi kesalahan.');
+            }
+        } catch (error) {
+            document.querySelector('.bot:last-child').remove();
+            appendMessage('bot', 'API sedang bermasalah.');
+        }
+    }
+
+    function appendMessage(sender, text) {
+        const chatContainer = document.getElementById('chatContainer');
+        const msg = document.createElement('div');
+        msg.className = `message ${sender}`;
+        msg.textContent = text;
+        chatContainer.appendChild(msg);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+</script>
+</body>
+</html>
